@@ -1,7 +1,6 @@
 import React from 'react';
-import '@testing-library/jest-dom/extend-expect';
-import {AlertInfo} from './AlertInfo';
-import {render} from '@testing-library/react';
+import { AlertInfo } from './AlertInfo';
+import { render } from '@testing-library/react';
 
 describe('AlertInfo', () => {
   it('renders with provided title and content', () => {
@@ -23,7 +22,7 @@ describe('AlertInfo', () => {
       content: 'Custom Content',
       close: () => null,
     };
-    const {container} = render(<AlertInfo {...alertProps} />);
+    const { container } = render(<AlertInfo {...alertProps} />);
     const defaultTitle = container.querySelector('strong');
 
     expect(defaultTitle).toBeDefined();
@@ -36,7 +35,7 @@ describe('AlertInfo', () => {
       content: undefined,
       close: () => null,
     };
-    const {container} = render(<AlertInfo {...alertProps} />);
+    const { container } = render(<AlertInfo {...alertProps} />);
     const defaultContent = container.querySelector('span');
 
     expect(defaultContent).toBeDefined();
