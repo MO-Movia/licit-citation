@@ -28,6 +28,7 @@ import {
   CitationPluginState,
   pluginKey,
 } from './Types';
+import { DarkThemeIcon, LightThemeIcon } from './images';
 export const KEY_CITATION: {
   description: string;
   windows: string;
@@ -313,11 +314,15 @@ export class CitationPlugin extends Plugin<CitationPluginState> {
     return newCitationTag;
   }
 
-  initButtonCommands(): {
-    '[format_quote] Add citation': AddCitationCommand;
-  } {
+  initButtonCommands(theme: string):unknown {
+     let image = null;
+      if ('light' == theme) {
+        image = LightThemeIcon;
+      } else {
+        image = DarkThemeIcon;
+      }
     return {
-      '[format_quote] Add citation': this.addCitationCmd,
+     [`[${image}] Add citation`]: this.addCitationCmd,
     };
   }
 

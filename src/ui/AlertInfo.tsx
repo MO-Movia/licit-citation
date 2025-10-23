@@ -12,7 +12,7 @@ type AlertState = {
 
 export class AlertInfo extends React.PureComponent<AlertProps, AlertState> {
   render(): React.ReactNode {
-    const title = this.props.title ?? 'Document Error!';
+    const title = this.props.title || 'Document Error!';
     const content =
       this.props.content ??
       'Unable to load the document. Have issues in Json format, please verify...';

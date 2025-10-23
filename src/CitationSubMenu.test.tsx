@@ -83,7 +83,7 @@ describe('Citation Plugin', () => {
 
   const plugin = new CitationPlugin();
   const effSchema = plugin.getEffectiveSchema(modSchema);
-  plugin.initButtonCommands();
+  plugin.initButtonCommands('dark');
   const { doc, p } = builders(effSchema, { p: { nodeType: 'paragraph' } });
 
   it('should render Citation Sub Menu', () => {
