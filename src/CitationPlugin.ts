@@ -29,6 +29,7 @@ import {
   pluginKey,
 } from './Types';
 import { DarkThemeIcon, LightThemeIcon } from './images';
+import { Transform } from 'prosemirror-transform';
 export const KEY_CITATION: {
   description: string;
   windows: string;
@@ -330,7 +331,7 @@ export class CitationPlugin extends Plugin<CitationPluginState> {
     state: EditorState,
     dispatch: (tr: Transaction) => void,
     view: EditorView
-  ): boolean {
+  ): boolean | Transform{
     const plugin = new CitationPlugin();
     return plugin.addCitationCmd.execute(state, dispatch, view);
   }
