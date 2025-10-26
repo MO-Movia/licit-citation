@@ -38,7 +38,7 @@
   "dependencies": {
     "classnames": "^2.5.1",
     "color": "^5.0.2",
-    "smooth-scroll-into-view-if-needed": "^1.1.32"
+    "smooth-scroll-into-view-if-needed": "^2.0.2"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.9.1",
