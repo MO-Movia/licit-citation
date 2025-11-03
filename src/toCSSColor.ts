@@ -45,4 +45,3 @@ export function toCSSColor(source: string): string {
   }
   return hex;
 }
-

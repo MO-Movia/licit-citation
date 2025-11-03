@@ -2,6 +2,7 @@
 import { Plugin, Transaction, EditorState } from 'prosemirror-state';
 import { EditorView, Decoration, DecorationSet } from 'prosemirror-view';
 import { Mark, Node, Schema } from 'prosemirror-model';
+import { Transform } from 'prosemirror-transform';
 import { CitationView } from './CitationView';
 import { CitationFooterView } from './CitationFooterView';
 import {
@@ -29,7 +30,6 @@ import {
   pluginKey,
 } from './Types';
 import { DarkThemeIcon, LightThemeIcon } from './images';
-import { Transform } from 'prosemirror-transform';
 export const KEY_CITATION: {
   description: string;
   windows: string;
@@ -331,7 +331,7 @@ export class CitationPlugin extends Plugin<CitationPluginState> {
     state: EditorState,
     dispatch: (tr: Transaction) => void,
     view: EditorView
-  ): boolean | Transform{
+  ): boolean| Transform {
     const plugin = new CitationPlugin();
     return plugin.addCitationCmd.execute(state, dispatch, view);
   }
