@@ -1,3 +1,8 @@
+/**
+ * @license MIT
+ * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
+ */
+
 import React from 'react';
 import { UICommand } from '@modusoperandi/licit-doc-attrs-step';
 import { Attrs, Fragment, ResolvedPos } from 'prosemirror-model';

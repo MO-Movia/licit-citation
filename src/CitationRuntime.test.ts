@@ -1,3 +1,8 @@
+/**
+ * @license MIT
+ * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
+ */
+
 import {CitationRuntime} from './CitationRuntime';
 import {Citation} from './Types';
 import * as http from './http';

@@ -1,4 +1,8 @@
-// Plugin to handle Citation.
+/**
+ * @license MIT
+ * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
+ */
+
 import { Plugin, Transaction, EditorState } from 'prosemirror-state';
 import { EditorView, Decoration, DecorationSet } from 'prosemirror-view';
 import { Mark, Node, Schema } from 'prosemirror-model';
