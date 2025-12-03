@@ -1,3 +1,8 @@
+/**
+ * @license MIT
+ * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
+ */
+
 import { CitationView } from './CitationView'; // Import CreateCitationObject type
 import { Node, Mark } from 'prosemirror-model';
 import { EditorView } from 'prosemirror-view';

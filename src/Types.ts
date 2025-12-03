@@ -1,3 +1,8 @@
+/**
+ * @license MIT
+ * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
+ */
+
 import { DecorationSet, EditorView } from 'prosemirror-view';
 import { CapcoService, Marking } from './Constants';
 import { PluginKey } from 'prosemirror-state';

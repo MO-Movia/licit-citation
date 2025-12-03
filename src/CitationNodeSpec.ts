@@ -1,3 +1,8 @@
+/**
+ * @license MIT
+ * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
+ */
+
 import { Attrs, AttributeSpec, DOMOutputSpec, Node, NodeSpec } from 'prosemirror-model';
 import { citationFields } from './Types';
 

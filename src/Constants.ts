@@ -1,3 +1,8 @@
+/**
+ * @license MIT
+ * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
+ */
+
 import {Node} from 'prosemirror-model';
 import {Transform} from 'prosemirror-transform';
 export const CITATION_NOTE = 'citationnote';

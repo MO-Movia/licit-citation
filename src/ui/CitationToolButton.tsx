@@ -1,3 +1,8 @@
+/**
+ * @license MIT
+ * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
+ */
+
 import React from 'react';
 import cx from 'classnames';
 import type {PointerSurfaceProps} from '@modusoperandi/licit-ui-commands';

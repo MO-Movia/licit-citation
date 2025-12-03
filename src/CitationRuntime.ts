@@ -1,3 +1,8 @@
+/**
+ * @license MIT
+ * @copyright Copyright 2025 Modus Operandi Inc. All Rights Reserved.
+ */
+ 
 // This implements the interface of `EditorRuntime`.
 // To  run  editor directly:
 import type { Citation } from './Types';
