@@ -186,7 +186,7 @@ export class CitationView {
 
   scrollAction(tr) {
     if (tr) {
-      this.outerView?.dispatch(tr.scrollIntoView());
+      this.outerView?.dispatch(tr);
     }
   }
 
