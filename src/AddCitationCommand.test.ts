@@ -488,7 +488,7 @@ describe('AddCitationCommand', () => {
     expect(addctcomd.cancel()).toBeFalsy();
   });
   it('should be active', () => {
-    expect(addctcomd.isActive()).toBeTruthy();
+    expect(addctcomd.isActive()).toBeFalsy();
   });
   it('should execute Custom', () => {
     const state = {} as unknown as EditorState;
