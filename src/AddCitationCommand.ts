@@ -351,7 +351,7 @@ export class AddCitationCommand extends UICommand {
   }
 
   isActive(): boolean {
-    return true;
+    return false;
   }
 
   cancel(): void {
