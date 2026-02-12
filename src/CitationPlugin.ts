@@ -335,7 +335,7 @@ export class CitationPlugin extends Plugin<CitationPluginState> {
     state: EditorState,
     dispatch: (tr: Transaction) => void,
     view: EditorView
-  ): boolean| Transform {
+  ): boolean| Transform | Promise<unknown>{
     const plugin = new CitationPlugin();
     return plugin.addCitationCmd.execute(state, dispatch, view);
   }
