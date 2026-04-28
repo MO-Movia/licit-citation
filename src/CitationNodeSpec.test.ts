@@ -1,3 +1,8 @@
+/**
+ * @license MIT
+ * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
+ */
+
 import {CitationNodeSpec, getAttrs} from './CitationNodeSpec';
 import {Node} from 'prosemirror-model';
 
@@ -64,12 +69,14 @@ describe('CitationNodeSpec', () => {
       dom.setAttribute(head, node.attrs[head]);
     }
 
-    const attrs = {
+    const parsedAttrs = {
       ...node.attrs,
+      positionMode: null,
+      paragraphPos: null,
     };
 
     const getAttrs = CitationNodeSpec.parseDOM[0].getAttrs(dom);
-    expect(getAttrs).toStrictEqual(attrs);
+    expect(getAttrs).toStrictEqual(parsedAttrs);
   });
 
   it('should return false if the input is a string', () => {

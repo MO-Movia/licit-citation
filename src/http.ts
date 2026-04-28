@@ -1,3 +1,8 @@
+/**
+ * @license MIT
+ * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
+ */
+
 // A simple wrapper for XHR.
 export function req(conf: { url: string; method: string; body?: string; headers?: {[k: string]: string}; }): Promise<string> {
   const req = new XMLHttpRequest();

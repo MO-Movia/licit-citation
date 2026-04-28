@@ -1,3 +1,8 @@
+/**
+ * @license MIT
+ * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
+ */
+
 import { EditorState, NodeSelection, Transaction } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import { Transform } from 'prosemirror-transform';
@@ -6,34 +11,10 @@ import {
   ShowTexteHighLightMark,
 } from './AddCitationCommand';
 import { PopUpHandle } from '@modusoperandi/licit-ui-commands';
-import { Node, ResolvedPos, Schema } from 'prosemirror-model';
+import { Fragment, Node, ResolvedPos, Schema } from 'prosemirror-model';
 import { AddCitationCommandOptions } from './Types';
-
-type CitationProps = {
-  documentTitle: string;
-  referenceId: string;
-  author: string;
-  publishedDate: string;
-  documentTitleCapco: string;
-  hyperLink: string;
-  dateAccessed: string;
-  overallCitationCAPCO: string;
-  pageTitle: string;
-  extractedInfoCAPCO: string;
-  descriptionCAPCO: string;
-  description: string;
-  citationObjectRefId: string;
-  pageStart: string;
-  pageEnd: string;
-  publishedDateTitle: string;
-  icod: string;
-  overallDocumentCapco: string;
-  authorTitle: string;
-  mode;
-  editorView: EditorView;
-  isCitationObject: boolean;
-  sourceText: string;
-};
+import { CITATION_NOTE } from './Constants';
+ 
 const citation = {
   overallDocumentCapco: 'TBD',
   author: 'Jerry Rodgers',
@@ -206,7 +187,7 @@ describe('AddCitationCommand', () => {
       addctcomd.saveCitationUseObject(
         mockeditorstate as unknown as EditorState,
         tr as unknown as Transform,
-        { isCitationObject: false } as unknown as CitationProps
+        { isCitationObject: false }
       )
     ).toStrictEqual(tr);
   });
@@ -290,7 +271,7 @@ describe('AddCitationCommand', () => {
         } as unknown as EditorState,
         undefined as unknown as () => undefined,
         {} as unknown as EditorView,
-        citation as unknown as CitationProps
+        citation
       )
     ).toBeFalsy();
   });
@@ -310,7 +291,7 @@ describe('AddCitationCommand', () => {
         {
           focus: () => undefined,
         } as unknown as EditorView,
-        null as unknown as CitationProps
+        null
       )
     ).toBeDefined();
   });
@@ -334,7 +315,7 @@ describe('AddCitationCommand', () => {
         {
           focus: () => undefined,
         } as unknown as EditorView,
-        null as unknown as CitationProps
+        null
       )
     ).toBeDefined();
   });
@@ -356,7 +337,7 @@ describe('AddCitationCommand', () => {
         } as unknown as EditorState,
         () => undefined,
         undefined as unknown as EditorView,
-        {} as unknown as CitationProps
+        {}
       )
     ).toBeDefined();
   });
@@ -516,7 +497,7 @@ describe('AddCitationCommand', () => {
       editorView: mockEditorView,
       isCitationObject: true,
       sourceText: 'Source Text',
-    } as unknown as CitationProps;
+    };
     addctcomd.citationBuilder = jest.fn().mockReturnValue('Mock citation text');
     addctcomd.showCitations(mockCitation);
 
@@ -536,5 +517,168 @@ describe('AddCitationCommand', () => {
         state: { selection: { empty: false } },
       } as unknown as EditorView)
     ).toBeDefined();
+  });
+
+  it('findEndOfSentence should return selectionEnd + i when hasDelimiter true', () => {
+    const cmd = new AddCitationCommand({ color: 'blue' } as AddCitationCommandOptions);
+    const state = {
+      selection: {
+        from: 1,
+        to: 4,
+        $to: { end: () => 10 },
+      },
+      doc: {
+        textBetween: (from: number, to: number) => {
+          if (from === 1 && to === 4) return 'ab.';
+          return 'tail!';
+        },
+      },
+    } as unknown as EditorState;
+    const result = cmd.findEndOfSentence(state, {} as ResolvedPos);
+    expect(result).toBe(8);
+  });
+
+  it('findEndOfSentence should return selectionEnd + i + 1 when no delimiter in selection', () => {
+    const cmd = new AddCitationCommand({ color: 'blue' } as AddCitationCommandOptions);
+    const state = {
+      selection: {
+        from: 1,
+        to: 4,
+        $to: { end: () => 10 },
+      },
+      doc: {
+        textBetween: (from: number, to: number) => {
+          if (from === 1 && to === 4) return 'abc';
+          return 'x?';
+        },
+      },
+    } as unknown as EditorState;
+    const result = cmd.findEndOfSentence(state, {} as ResolvedPos);
+    expect(result).toBe(6);
+  });
+
+  it('findEndOfSentence should fallback to parentStart + parentNodeSize when no delimiter found', () => {
+    const cmd = new AddCitationCommand({ color: 'blue' } as AddCitationCommandOptions);
+    jest.spyOn(cmd, 'getParentStartPos').mockReturnValue(5);
+    jest.spyOn(cmd, 'getParentNodeSize').mockReturnValue(9);
+    const state = {
+      selection: {
+        from: 1,
+        to: 4,
+        $to: { end: () => 10 },
+      },
+      doc: {
+        textBetween: () => 'abcd',
+      },
+    } as unknown as EditorState;
+    const result = cmd.findEndOfSentence(state, {} as ResolvedPos);
+    expect(result).toBe(14);
+  });
+
+  it('createFootNoteForCitation should set paragraph-relative attrs and list attrs', () => {
+    const cmd = new AddCitationCommand({ color: 'blue' } as AddCitationCommandOptions);
+    const fragmentSpy = jest
+      .spyOn(Fragment, 'from')
+      .mockReturnValue({} as unknown as Fragment);
+    jest.spyOn(cmd, 'showCitations').mockImplementation(() => undefined);
+    jest
+      .spyOn(cmd, 'calculateEndOfSentenceAndListAttributes')
+      .mockReturnValue({ sentenceEnd: 10, listNodeAttr: { indent: 1 }, listPos: 3 });
+
+    const tr = {
+      insert: jest.fn().mockReturnThis(),
+      setNodeMarkup: jest.fn().mockReturnThis(),
+    } as unknown as Transform;
+
+    const state = {
+      schema: {
+        nodes: {
+          [CITATION_NOTE]: {
+            attrs: { from: {}, to: {}, paragraphPos: {}, positionMode: {} },
+            create: () => ({}),
+          },
+        },
+      },
+      selection: {
+        from: 7,
+        to: 9,
+        $to: { start: () => 6 },
+        $head: {},
+      },
+    } as unknown as EditorState;
+
+    const view = {
+      state: { selection: { empty: false } },
+    } as unknown as EditorView;
+
+    const result = cmd.createFootNoteForCitation(
+      view,
+      state,
+      tr,
+      citation
+    );
+
+    expect(result).toBe(tr);
+    expect((tr.insert as jest.Mock).mock.calls.length).toBe(1);
+    expect((tr.setNodeMarkup as jest.Mock).mock.calls.length).toBe(2);
+    const citationAttrs = (tr.setNodeMarkup as jest.Mock).mock.calls[0][2];
+    expect(citationAttrs.from).toBe(1);
+    expect(citationAttrs.to).toBe(3);
+    expect(citationAttrs.paragraphPos).toBe(6);
+    fragmentSpy.mockRestore();
+  });
+
+  it('createFootNoteForCitation should return tr when selection is empty', () => {
+    const cmd = new AddCitationCommand({ color: 'blue' } as AddCitationCommandOptions);
+    const tr = {} as Transform;
+    const state = {} as EditorState;
+    const view = {
+      state: { selection: { empty: true } },
+    } as unknown as EditorView;
+    expect(
+      cmd.createFootNoteForCitation(
+        view,
+        state,
+        tr,
+        citation
+      )
+    ).toBe(tr);
+  });
+
+  it('getListAttributes should return list attrs when list node is found', () => {
+    const cmd = new AddCitationCommand({ color: 'blue' } as AddCitationCommandOptions);
+    jest.spyOn(cmd, 'isList').mockImplementation((_head, d) => d === 2);
+    const head = {
+      depth: 3,
+      node: () => ({ attrs: { indent: 2 } }),
+      path: [0, 1, 2, 3, 4, 5, 6],
+    } as unknown as ResolvedPos;
+    const result = cmd.getListAttributes(head);
+    expect(result.listNodeAttr).toStrictEqual({ indent: 2 });
+    expect(result.listPos).toBe(6);
+  });
+
+  it('getListAttributes should return defaults when no list node is found', () => {
+    const cmd = new AddCitationCommand({ color: 'blue' } as AddCitationCommandOptions);
+    jest.spyOn(cmd, 'isList').mockReturnValue(false);
+    const head = {
+      depth: 1,
+      node: () => ({ attrs: {} }),
+      path: [0, 1, 2, 3, 4],
+    } as unknown as ResolvedPos;
+    const result = cmd.getListAttributes(head);
+    expect(result.listNodeAttr).toBeNull();
+    expect(result.listPos).toBe(0);
+  });
+
+  it('saveCitationUseObject should return unchanged tr when isCitationObject is true', () => {
+    const cmd = new AddCitationCommand({ color: 'blue' } as AddCitationCommandOptions);
+    const tr = {} as Transform;
+    const result = cmd.saveCitationUseObject(
+      {} as EditorState,
+      tr,
+      { isCitationObject: true }
+    );
+    expect(result).toBe(tr);
   });
 });

@@ -1,3 +1,8 @@
+/**
+ * @license MIT
+ * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
+ */
+
 import Color from 'color';
 
 const RGBA_PATTERN = /^rgba/i;

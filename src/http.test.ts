@@ -1,3 +1,8 @@
+/**
+ * @license MIT
+ * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
+ */
+
 import { req, GET, POST, DELETE, PATCH } from './http';
 
 declare let global;
@@ -146,5 +151,28 @@ describe('req function', () => {
     } finally {
       delete global.XMLHttpRequest;
     }
+  });
+
+  it('should call xhr.abort only once when abort is called repeatedly', () => {
+    const url = 'https://example.com/api/data';
+    const method = 'GET';
+
+    const localMockXHR = {
+      open: jest.fn(),
+      setRequestHeader: jest.fn(),
+      send: jest.fn(),
+      abort: jest.fn(),
+      addEventListener: jest.fn(),
+    };
+    global.XMLHttpRequest = jest.fn(() => localMockXHR);
+
+    const requestPromise = req({ url, method }) as unknown as {
+      abort: () => void;
+    };
+
+    requestPromise.abort();
+    requestPromise.abort();
+
+    expect(localMockXHR.abort).toHaveBeenCalledTimes(1);
   });
 });

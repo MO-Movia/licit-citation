@@ -1,3 +1,8 @@
+/**
+ * @license MIT
+ * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
+ */
+
 import { EditorView } from 'prosemirror-view';
 import { AddCitationCommand } from './AddCitationCommand';
 import { TextSelection } from 'prosemirror-state';
@@ -113,6 +118,8 @@ export class CitationFooterView {
       pages: node.attrs.pages,
       publishedDateTitle: node.attrs.publishedDateTitle,
       from: node.attrs.from,
+      positionMode: node.attrs.positionMode,
+      paragraphPos: node.attrs.paragraphPos,
       isCitationObject: node.attrs.isCitationObject,
       to: node.attrs.to,
     };

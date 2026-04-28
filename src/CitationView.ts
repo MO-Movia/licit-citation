@@ -1,3 +1,8 @@
+/**
+ * @license MIT
+ * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
+ */
+
 import { Transform } from 'prosemirror-transform';
 import { DOMSerializer, Node, Mark, Attrs } from 'prosemirror-model';
 import { EditorView, Decoration } from 'prosemirror-view';
@@ -115,7 +120,10 @@ export class CitationView {
     }
 
     if (parentNode) {
-      this.updateMarks(false, parentNode, this.getFromValue(e), themarkPos);
+      const relativeFrom = this.getFromValue(e);
+      const selectedAbsoluteFrom =
+        Number(this.node.attrs.paragraphPos) + Number(relativeFrom);
+      this.updateMarks(false, parentNode, selectedAbsoluteFrom, themarkPos);
     }
   }
 
@@ -150,6 +158,10 @@ export class CitationView {
   ): void {
     const citationNode: { pos: number; attrs: Attrs }[] = [];
     if (parentNode) {
+      const doc = this.outerView?.state.tr.doc;
+      if (!doc) {
+        return;
+      }
       const tr = this.outerView?.state.tr;
       parentNode.descendants((child, pos, _parent) => {
         if (child.type.name === CITATION_NOTE) {
@@ -164,11 +176,25 @@ export class CitationView {
         citationNode.forEach((cit) => {
           // to check the mouse is over correct citation if a paragraph have multiple citation
           // Copy and paste CITATION applied paragraph, CITATION highlight not showing
-          if (selectedMarkPos === Number(cit.attrs.from)) {
+          const absoluteFrom =
+            Number(cit.attrs.paragraphPos) + Number(cit.attrs.from);
+
+          if (selectedMarkPos === absoluteFrom) {
+            const absoluteRange = {
+              from: Number(cit.attrs.paragraphPos) + Number(cit.attrs.from),
+              to: Number(cit.attrs.paragraphPos) + Number(cit.attrs.to),
+            };
+            if (
+              Number.isNaN(absoluteRange.from) ||
+              Number.isNaN(absoluteRange.to) ||
+              absoluteRange.from >= absoluteRange.to
+            ) {
+              return;
+            }
             // Citation text not highlighting when apply custom style
             tr?.setMeta(
               HIGHLIGHTDECO,
-              Decoration.inline(cit.attrs.from, cit.attrs.to, {
+              Decoration.inline(absoluteRange.from, absoluteRange.to, {
                 style: `background-color: ${MARK_TEXT_HIGHLIGHT_COLOR};`,
               })
             );
@@ -442,10 +468,17 @@ export class CitationView {
     const { selection } = tr;
 
     if (CITATION_NOTE === this.getNameAfter(selection)) {
+      const absoluteRange = {
+        from: Number(selection.$head.nodeAfter?.attrs.paragraphPos) +
+          Number(selection.$head.nodeAfter?.attrs.from),
+        to: Number(selection.$head.nodeAfter?.attrs.paragraphPos) +
+          Number(selection.$head.nodeAfter?.attrs.to),
+      };
+
       tr = this.removeCitationMark(
         tr,
-        selection.$head.nodeAfter?.attrs.from,
-        selection.$head.nodeAfter?.attrs.to
+        absoluteRange.from,
+        absoluteRange.to
       ) as Transaction;
       tr = tr.delete(selection.$head.pos, selection.$head.pos + 2);
       const parentPos = selection.$head.pos - selection.$head.parentOffset - 1;

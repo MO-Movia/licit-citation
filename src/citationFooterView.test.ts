@@ -1,3 +1,8 @@
+/**
+ * @license MIT
+ * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
+ */
+
 import { EditorView } from 'prosemirror-view';
 import { AddCitationCommand } from './AddCitationCommand';
 import { CitationFooterView } from './CitationFooterView';
@@ -212,5 +217,73 @@ describe('CitationFooterView', () => {
     jest.spyOn(pluginKey, 'getState').mockReturnValue(undefined);
     const result = footerView.getPluginState({});
     expect(result).toBeUndefined();
+  });
+
+  it('should scroll to a matched node position in scrollToSpecificNode', () => {
+    const scrollSpy = jest.spyOn(footerView, 'scrollToNode').mockImplementation(() => undefined);
+    const localView = {
+      state: {
+        doc: {
+          descendants: (cb) => {
+            cb('nodeA', 7);
+          },
+        },
+      },
+    } as unknown as EditorView;
+
+    footerView.scrollToSpecificNode(localView, 'nodeA');
+    expect(scrollSpy).toHaveBeenCalledWith(localView, 7);
+  });
+
+  it('update should populate when docs changed', () => {
+    const populateSpy = jest.spyOn(footerView, 'populateCitationsOnLoad');
+    populateSpy.mockImplementation(() => undefined);
+    footerView.update(
+      { state: { doc: { id: 1 } } },
+      { doc: { id: 2 } }
+    );
+    expect(populateSpy).toHaveBeenCalled();
+  });
+
+  it('update should populate and reset loaded flag when plugin loaded', () => {
+    const populateSpy = jest.spyOn(footerView, 'populateCitationsOnLoad');
+    populateSpy.mockImplementation(() => undefined);
+    const pluginState = { loaded: true };
+    jest.spyOn(footerView, 'getPluginState').mockReturnValue(pluginState);
+    const sameDoc = { id: 1 };
+    footerView.update({ state: { doc: sameDoc } }, { doc: sameDoc });
+    expect(populateSpy).toHaveBeenCalled();
+    expect(pluginState.loaded).toBe(false);
+  });
+
+  it('populateCitationsOnLoad should append citation entries and set lastAddedCitation', () => {
+    const mockDoc = {
+      descendants: (cb) => {
+        cb(
+          {
+            type: { name: 'citationnote' },
+            attrs: { referenceId: 'R1', citationId: 'C1' },
+          },
+          2
+        );
+      },
+    };
+    jest
+      .spyOn(footerView, 'buildCitationObject')
+      .mockReturnValue({});
+    jest.spyOn(CitationBuilder, 'defaultCitationText').mockReturnValue('CIT 1');
+    footerView.view = {
+      state: {
+        tr: {
+          doc: {
+            nodeAt: () => ({ attrs: { objectId: 'OBJ-1' } }),
+          },
+        },
+      },
+    } as unknown as EditorView;
+
+    footerView.populateCitationsOnLoad(mockDoc);
+    expect((footerView.dom as HTMLElement).querySelectorAll('p').length).toBe(1);
+    expect(footerView.lastAddedCitation).toBe('CIT 1');
   });
 });

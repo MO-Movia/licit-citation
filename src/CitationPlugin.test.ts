@@ -1,3 +1,8 @@
+/**
+ * @license MIT
+ * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
+ */
+
 import {
   CitationPlugin,
   commentDeco,
@@ -25,13 +30,13 @@ import {
   Node,
   ParseRule,
   Schema,
-  Slice,
 } from 'prosemirror-model';
 import { EditorView } from 'prosemirror-view';
 import { Transform } from 'prosemirror-transform';
 import { CitationView, Style } from './CitationView';
 import { CitationRuntime } from './CitationRuntime';
 import { isTransparent, toCSSColor } from './toCSSColor';
+import * as AddCitationModule from './AddCitationCommand';
 
 import { CitationProps } from './Types';
 import { CapcoService } from './Constants';
@@ -863,7 +868,7 @@ describe('Citation Plugin', () => {
   it('should create footnote', () => {
     const editor = createEditor(doc('<cursor>', p('Hello')));
     const tr = new AddCitationCommand().createFootNoteForCitation(
-      editor.view as unknown as EditorView,
+      editor.view,
       editor.state,
       editor.state.tr,
       citation
@@ -1181,15 +1186,15 @@ describe('Citation Plugin', () => {
             },
           },
         },
-      } as unknown as EditorView,
+      },
       {
         clientX: 0,
         clientY: 1,
         preventDefault: () => {
           return null;
         },
-      } as unknown as ClipboardEvent,
-      {} as unknown as Slice
+      },
+      {}
     );
     expect(handlDropRet).toBeTruthy();
   });
@@ -1225,13 +1230,13 @@ describe('Citation Plugin', () => {
             },
           },
         },
-      } as unknown as EditorView,
+      },
       {
         key: 'Enter',
         preventDefault: () => {
           return null;
         },
-      } as unknown as KeyboardEvent
+      }
     );
     expect(handleDOMEventsRet).toBeFalsy();
   });
@@ -1257,13 +1262,13 @@ describe('Citation Plugin', () => {
             },
           },
         },
-      } as unknown as EditorView,
+      },
       {
         key: '.',
         preventDefault: () => {
           return null;
         },
-      } as unknown as KeyboardEvent
+      }
     );
     expect(handleDOMEventsRet).toBeFalsy();
   });
@@ -1289,13 +1294,13 @@ describe('Citation Plugin', () => {
             },
           },
         },
-      } as unknown as EditorView,
+      },
       {
         key: 'a',
         preventDefault: () => {
           return null;
         },
-      } as unknown as KeyboardEvent
+      }
     );
     expect(handleDOMEventsRet).toBeTruthy();
   });
@@ -1321,14 +1326,14 @@ describe('Citation Plugin', () => {
             },
           },
         },
-      } as unknown as EditorView,
+      },
       {
         key: 'a',
         preventDefault: () => {
           return null;
         },
         ctrlKey: true,
-      } as unknown as KeyboardEvent
+      }
     );
     expect(handleDOMEventsRet).toBeFalsy();
   });
@@ -1354,15 +1359,175 @@ describe('Citation Plugin', () => {
             },
           },
         },
-      } as unknown as EditorView,
+      },
       {
         key: 'a',
         preventDefault: () => {
           return null;
         },
         ctrlKey: true,
-      } as unknown as KeyboardEvent
+      }
     );
     expect(handleDOMEventsRet).toBeFalsy();
+  });
+
+  it('handleAppendTransactions should update paragraph relative citation attrs', () => {
+    const tr = {
+      setNodeMarkup: jest.fn().mockReturnThis(),
+      setMeta: jest.fn().mockReturnThis(),
+    };
+    const nextState = {
+      tr,
+      doc: {
+        descendants: (cb) => {
+          cb(
+            {
+              type: { name: 'citationnote' },
+              attrs: { paragraphPos: 10, from: 1, to: 3 },
+            },
+            4
+          );
+        },
+      },
+    } as unknown as EditorState;
+    const txns = [
+      {
+        docChanged: true,
+        mapping: {
+          map: (value: number) => value + 2,
+        },
+      },
+    ] as unknown as readonly Transaction[];
+
+    const result = plugin.handleAppendTransactions(
+      txns,
+      {} as EditorState,
+      nextState
+    );
+
+    expect(result).toBe(tr);
+    expect((tr.setNodeMarkup).mock.calls.length).toBe(1);
+    expect((tr.setMeta).mock.calls.length).toBe(1);
+    const attrs = (tr.setNodeMarkup).mock.calls[0][2];
+    expect(attrs.positionMode).toBe('paragraph');
+  });
+
+  it('handleAppendTransactions should ignore citationnote with invalid numeric attrs', () => {
+    const tr = {
+      setNodeMarkup: jest.fn().mockReturnThis(),
+      setMeta: jest.fn().mockReturnThis(),
+    };
+    const nextState = {
+      tr,
+      doc: {
+        descendants: (cb) => {
+          cb(
+            {
+              type: { name: 'citationnote' },
+              attrs: { paragraphPos: 'x', from: 1, to: 3 },
+            },
+            4
+          );
+        },
+      },
+    } as unknown as EditorState;
+    const txns = [
+      {
+        docChanged: true,
+        mapping: {
+          map: (value: number) => value + 1,
+        },
+      },
+    ] as unknown as readonly Transaction[];
+
+    const result = plugin.handleAppendTransactions(
+      txns,
+      {} as EditorState,
+      nextState
+    );
+
+    expect(result).toBeNull();
+    expect((tr.setNodeMarkup).mock.calls.length).toBe(0);
+  });
+
+  it('handleAppendTransactions should return null when mapped values do not change attrs', () => {
+    const tr = {
+      setNodeMarkup: jest.fn().mockReturnThis(),
+      setMeta: jest.fn().mockReturnThis(),
+    };
+    const nextState = {
+      tr,
+      doc: {
+        descendants: (cb) => {
+          cb(
+            {
+              type: { name: 'citationnote' },
+              attrs: { paragraphPos: 10, from: 1, to: 3 },
+            },
+            4
+          );
+        },
+      },
+    } as unknown as EditorState;
+    const txns = [
+      {
+        docChanged: true,
+        mapping: {
+          map: (value: number) => value,
+        },
+      },
+    ] as unknown as readonly Transaction[];
+
+    const result = plugin.handleAppendTransactions(
+      txns,
+      {} as EditorState,
+      nextState
+    );
+    expect(result).toBeNull();
+    expect((tr.setNodeMarkup).mock.calls.length).toBe(0);
+  });
+
+  it('findMarkObject should match relative or absolute mark position', () => {
+    const parentNode = {
+      descendants: (cb) => {
+        cb({ marks: [{ attrs: { pos: 5 } }], nodeSize: 2 }, 1);
+      },
+    };
+    const found = plugin.findMarkObject(parentNode, 3, 1);
+    expect(found).toBeDefined();
+  });
+
+  it('getRow should call removeTexthighlightMark when citation mark is found', () => {
+    const removeSpy = jest
+      .spyOn(AddCitationModule, 'removeTexthighlightMark')
+      .mockReturnValue({ changed: true } as unknown as Transform);
+    jest.spyOn(plugin, 'findMarkObject').mockReturnValue({
+      pos: 3,
+      diff: 2,
+      marks: [],
+    });
+
+    const node = { attrs: { from: 1 } };
+    const prevState = {
+      tr: {
+        doc: {
+          nodeAt: () => ({ type: { name: 'citationnote' } }),
+        },
+      },
+    };
+    const nextState = {
+      tr: {},
+    };
+    const result = plugin.getRow(
+      node,
+      prevState,
+      1,
+      {},
+      2,
+      nextState,
+      null
+    );
+    expect(result).toStrictEqual({ changed: true });
+    removeSpy.mockRestore();
   });
 });

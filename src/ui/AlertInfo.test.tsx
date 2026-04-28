@@ -1,3 +1,8 @@
+/**
+ * @license MIT
+ * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
+ */
+
 import React from 'react';
 import { AlertInfo } from './AlertInfo';
 import { render } from '@testing-library/react';

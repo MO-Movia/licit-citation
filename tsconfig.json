@@ -5,6 +5,7 @@
     "target": "ES2022",
     "module": "esnext",
     "moduleResolution": "node",
+    "ignoreDeprecations": "6.0",
     "allowSyntheticDefaultImports": true,
     "lib": [
       "ES2022",

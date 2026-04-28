@@ -1,3 +1,8 @@
+/**
+ * @license MIT
+ * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
+ */
+
 import { DecorationSet, EditorView } from 'prosemirror-view';
 import { CapcoService, Marking } from './Constants';
 import { PluginKey } from 'prosemirror-state';
@@ -42,9 +47,11 @@ export type Citation = {
   citationObjectRefId?: string;
   pages?: string;
   publishedDateTitle?: string;
-  from?: string;
+  from?: string | number;
   isCitationObject?: boolean;
-  to?: string;
+  positionMode?: string;
+  to?: string | number;
+  paragraphPos?:string | number;
 };
 
 export const citationFields: (keyof Citation)[] = [
@@ -71,7 +78,9 @@ export const citationFields: (keyof Citation)[] = [
   'pages',
   'publishedDateTitle',
   'from',
+  'positionMode',
   'to',
+  'paragraphPos',
 ];
 
 export type CitationProps = Citation & {

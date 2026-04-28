@@ -1,3 +1,8 @@
+/**
+ * @license MIT
+ * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
+ */
+
 // [FS] IRAD-1251 2021-03-10
 // UI for Citation dialog
 import React from 'react';

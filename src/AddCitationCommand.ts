@@ -1,3 +1,8 @@
+/**
+ * @license MIT
+ * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
+ */
+
 import React from 'react';
 import { UICommand } from '@modusoperandi/licit-doc-attrs-step';
 import { Attrs, Fragment, ResolvedPos } from 'prosemirror-model';
@@ -28,11 +33,12 @@ import {
   CitationProps,
 } from './Types';
 import { toISOString } from './utils';
+import { POSITION_MODE_PARAGRAPH } from './CitationPosition';
 
 export class AddCitationCommand extends UICommand {
   citationPositions: number[] = [];
   citationText = '';
-  from = '0';
+  from: string | number = '0';
   _popUp: PopUpHandle | null = null;
   _alertPopup: PopUpHandle | null = null;
   _color?: string;
@@ -214,14 +220,26 @@ export class AddCitationCommand extends UICommand {
     }
 
     const citationNote = state.schema.nodes[CITATION_NOTE];
+    const paragraphPos = state.selection.$to.start();
+    const absoluteFrom = state.selection.from;
+    const absoluteTo = state.selection.to;
+
+    const from = absoluteFrom - paragraphPos;
+    const to = absoluteTo - paragraphPos;
+
     const newattrs = {
       ...Object.keys(citationNote['attrs']).reduce((acc, key) => {
         acc[key] = key in citation ? citation[key] : null;
         return acc;
       }, {}),
       ...citation,
-      from: state.tr.selection.from,
-      to: state.tr.selection.to,
+      // from: state.tr.selection.from - state.selection.$to.start(),
+      // to: state.tr.selection.to - state.selection.$to.start(),
+      // positionMode: POSITION_MODE_PARAGRAPH,
+      from,
+      to,
+      paragraphPos,
+      positionMode: POSITION_MODE_PARAGRAPH,
     } as Attrs;
     const citationNoteNode = citationNote.create(null);
 

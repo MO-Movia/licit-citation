@@ -1,3 +1,8 @@
+/**
+ * @license MIT
+ * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
+ */
+
 import {p} from 'jest-prosemirror';
 import {DOMOutputSpec} from 'prosemirror-model';
 import {toMarkDOM, getMarkAttrs} from './CitationHighlightMarkSpec';

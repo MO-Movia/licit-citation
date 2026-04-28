@@ -1,3 +1,8 @@
+/**
+ * @license MIT
+ * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
+ */
+
 import { CitationDialog, CitationDialogProps } from './CitationDialog';
 import React from 'react';
 import { DOMOutputSpec, Mark, MarkSpec, Schema } from 'prosemirror-model';

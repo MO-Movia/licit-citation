@@ -1,3 +1,7 @@
+/**
+ * @license MIT
+ * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
+ */
 
 export function toISOString(date: Date): string {
   return date.getUTCFullYear().toString().padStart(4, '0') +

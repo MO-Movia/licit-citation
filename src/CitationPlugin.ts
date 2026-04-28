@@ -1,3 +1,8 @@
+/**
+ * @license MIT
+ * @copyright Copyright 2026 Modus Operandi Inc. All Rights Reserved.
+ */
+
 // Plugin to handle Citation.
 import { Plugin, Transaction, EditorState } from 'prosemirror-state';
 import { EditorView, Decoration, DecorationSet } from 'prosemirror-view';
@@ -28,14 +33,16 @@ import {
   CitationPluginState,
   pluginKey,
 } from './Types';
+import {
+  POSITION_MODE_GLOBAL,
+  POSITION_MODE_PARAGRAPH,
+} from './CitationPosition';
 export const KEY_CITATION: {
   description: string;
   windows: string;
   mac: string;
   common?: string;
-} = makeKeyMapWithCommon('Citation', 'Mod-' + "'");
-const DELKEYCODE = 46;
-const BACKSPACEKEYCODE = 8;
+} = makeKeyMapWithCommon('Citation', 'Mod-' + "'"); 
 
 // Fix: Update the private plugin classes as a named export rather than the default
 export class CitationPlugin extends Plugin<CitationPluginState> {
@@ -85,7 +92,7 @@ export class CitationPlugin extends Plugin<CitationPluginState> {
           const pos =
             view.state.selection.from < 2 ? 0 : view.state.selection.from - 2;
           const node = view.state.tr.doc.nodeAt(pos);
-          if (node && CITATION_NOTE === node.type.name) {
+          if (CITATION_NOTE === node?.type.name) {
             event.preventDefault();
             retVal = true;
           }
@@ -102,7 +109,7 @@ export class CitationPlugin extends Plugin<CitationPluginState> {
             });
             if (dropPos?.pos && 0 <= dropPos.pos - 2) {
               const node = view.state.tr.doc.nodeAt(dropPos.pos - 2);
-              if (node && CITATION_NOTE === node.type.name) {
+              if (CITATION_NOTE === node?.type.name) {
                 event.preventDefault();
                 retVal = true;
               }
@@ -133,7 +140,7 @@ export class CitationPlugin extends Plugin<CitationPluginState> {
             const pos =
               view.state.selection.from < 2 ? 0 : view.state.selection.from - 2;
             const node = view.state.tr.doc.nodeAt(pos);
-            if (node && CITATION_NOTE === node.type.name) {
+            if (CITATION_NOTE === node?.type.name) {
               const allowedKeys = [
                 'Enter',
                 'ArrowRight',
@@ -156,8 +163,8 @@ export class CitationPlugin extends Plugin<CitationPluginState> {
                   event.key === '.' ||
                   (event.key === 'Enter' &&
                     CITATION_NOTE ===
-                      view.state.tr.doc.nodeAt(view.state.selection.from)?.type
-                        .name)
+                    view.state.tr.doc.nodeAt(view.state.selection.from)?.type
+                      .name)
                 ) {
                   event.preventDefault();
                 }
@@ -166,8 +173,7 @@ export class CitationPlugin extends Plugin<CitationPluginState> {
                 retVal = true;
               }
             } else if (
-              view.state.selection.$anchor.nodeAfter &&
-              CITATION_NOTE === view.state.selection.$anchor.nodeAfter.type.name
+              CITATION_NOTE === view.state.selection.$anchor.nodeAfter?.type.name
             ) {
               event.preventDefault();
             }
@@ -181,7 +187,7 @@ export class CitationPlugin extends Plugin<CitationPluginState> {
       },
       appendTransaction: (transactions, prevState, nextState) => {
         return this.handleAppendTransactions(
-          transactions as [Transaction],
+          transactions,
           prevState,
           nextState
         );
@@ -192,43 +198,73 @@ export class CitationPlugin extends Plugin<CitationPluginState> {
       },
     });
     this.addCitationCmd = new AddCitationCommand(opt?.addCitationOpt);
-  }
+  } 
 
   handleAppendTransactions(
-    transactions: [Transaction],
-    prevState: EditorState,
+    transactions: readonly Transaction[],
+    _prevState: EditorState,
     nextState: EditorState
-  ): Transaction {
-    let tr: Transaction = null;
+  ): Transaction | null {
 
-    if (isDocChanged(transactions)) {
-      if (prevState.doc !== nextState.doc) {
-        const startPos = nextState.tr.selection.from;
-        let parentPos =
-          nextState.tr.selection.$head.pos -
-          nextState.tr.selection.$head.parentOffset -
-          1;
-        parentPos = parentPos < 0 ? 0 : parentPos;
-        const parentNode = nextState.tr.doc.nodeAt(parentPos);
-
-        if (
-          this._view &&
-          (DELKEYCODE === this._view['lastKeyCode'] ||
-            BACKSPACEKEYCODE === this._view['lastKeyCode'])
-        ) {
-          const node = prevState.tr.doc.nodeAt(startPos);
-          tr = this.getRow(
-            node,
-            prevState,
-            startPos,
-            parentNode,
-            parentPos,
-            nextState,
-            tr
-          ) as Transaction;
-        }
-      }
+    if (!transactions.some(tr => tr.docChanged)) {
+      return null;
     }
+
+    if (
+      !nextState?.doc ||
+      typeof (nextState.doc as { descendants?: unknown }).descendants !==
+        'function'
+    ) {
+      return null;
+    }
+
+    const tr = nextState.tr;
+    let modified = false;
+
+    nextState.doc.descendants((node, pos) => {
+      if (node.type.name !== CITATION_NOTE) return;
+
+      let paragraphPos = Number(node.attrs.paragraphPos);
+      const from = Number(node.attrs.from);
+      const to = Number(node.attrs.to);
+
+      if (Number.isNaN(paragraphPos) || Number.isNaN(from) || Number.isNaN(to)) return;
+
+      // 🔥 Step 1: compute absolute BEFORE mapping
+      let absFrom = paragraphPos + from;
+      let absTo = paragraphPos + to;
+
+      // 🔥 Step 2: map absolute positions
+      transactions.forEach(txn => {
+        if (!txn.docChanged) return;
+        absFrom = txn.mapping.map(absFrom, -1);
+        absTo = txn.mapping.map(absTo, 1);
+        paragraphPos = txn.mapping.map(paragraphPos, -1);
+      });
+
+      // 🔥 Step 3: recompute relative (this is the key fix)
+      const newFrom = absFrom - paragraphPos;
+      const newTo = absTo - paragraphPos;
+
+      if (
+        paragraphPos !== node.attrs.paragraphPos ||
+        newFrom !== from ||
+        newTo !== to
+      ) {
+        tr.setNodeMarkup(pos, undefined, {
+          ...node.attrs,
+          paragraphPos,
+          from: newFrom,
+          to: newTo,
+          positionMode: POSITION_MODE_PARAGRAPH,
+        });
+        modified = true;
+      }
+    });
+
+    if (!modified) return null;
+
+    tr.setMeta('addToHistory', false);
     return tr;
   }
 
@@ -275,8 +311,14 @@ export class CitationPlugin extends Plugin<CitationPluginState> {
       }
     });
 
+    const relativeFrom = Number(from);
+    const absoluteFrom = Number.isNaN(relativeFrom)
+      ? relativeFrom
+      : relativeFrom + themarkPos + 1;
+
     return citationmarkNode.find((obj) => {
-      return obj.marks[0].attrs.pos === from;
+      const markPos = Number(obj.marks[0].attrs.pos);
+      return markPos === absoluteFrom || markPos === relativeFrom;
     });
   }
 
@@ -301,12 +343,30 @@ export class CitationPlugin extends Plugin<CitationPluginState> {
 
   createCitationNotObject(Nodeattrs: NamedNodeMap) {
     const newCitationTag = document.createElement(CITATION_NOTE);
+    const getAttrValue = (name: string): string => {
+      if (typeof Nodeattrs?.getNamedItem === 'function') {
+        return Nodeattrs.getNamedItem(name)?.value ?? '';
+      }
+      const raw = (Nodeattrs as unknown as Record<string, unknown>)[name];
+      return typeof raw === 'string' ? raw : '';
+    };
+
     citationFields.forEach((field) =>
-      newCitationTag.setAttribute(field, Nodeattrs[field] ?? '')
+      newCitationTag.setAttribute(field, getAttrValue(field))
     );
 
-    newCitationTag.setAttribute('from', Nodeattrs['posfrom'] ?? '');
-    newCitationTag.setAttribute('to', Nodeattrs['posto'] ?? '');
+    newCitationTag.setAttribute(
+      'from',
+      getAttrValue('posfrom') || getAttrValue('from')
+    );
+    newCitationTag.setAttribute(
+      'to',
+      getAttrValue('posto') || getAttrValue('to')
+    );
+    newCitationTag.setAttribute(
+      'positionMode',
+      getAttrValue('positionMode') || POSITION_MODE_GLOBAL
+    );
 
     newCitationTag.setAttribute('class', 'citationnote');
     newCitationTag.setAttribute('contenteditable', 'false');
@@ -329,11 +389,7 @@ export class CitationPlugin extends Plugin<CitationPluginState> {
     const plugin = new CitationPlugin();
     return plugin.addCitationCmd.execute(state, dispatch, view);
   }
-}
-
-function isDocChanged(transactions: Transaction[]) {
-  return transactions.some((transaction) => transaction.docChanged);
-}
+} 
 
 export function isHighlightViaCollab(tr: Transaction) {
   let viaCollab = false;
