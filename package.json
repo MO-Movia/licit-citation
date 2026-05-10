@@ -58,7 +58,7 @@
     "jest-prosemirror": "^3.0.1",
     "jest-sonar-reporter": "^2.0.0",
     "prosemirror-test-builder": "^1.1.1",
-    "lint-staged": "^16.2.3",
+    "lint-staged": "^17.0.4",
     "prettier": "^3.2.5",
     "ts-jest": "^29.0.3",
     "ts-node": "^10.4.0",
